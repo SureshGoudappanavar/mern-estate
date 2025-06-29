@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import userRouter from './routes/user.route.js';
 import userAuth from './routes/auth.router.js';
+import uploadRoutes from './routes/upload.js';
+
 dotenv.config();
 mongoose.connect(process.env.MONGO)
 .then(()=>{
@@ -21,7 +23,7 @@ app.listen(3000,()=>{
 app.use('/api/user',userRouter);
 
 app.use('/api/auth',userAuth);
-
+app.use('/api/upload', uploadRoutes);
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
     const message=err.message||"Internal Server Error";
