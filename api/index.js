@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import userRouter from './routes/user.route.js';
 import userAuth from './routes/auth.router.js';
 import uploadRoutes from './routes/upload.js';
-
+import cookieParser from 'cookie-parser';
 dotenv.config();
 mongoose.connect(process.env.MONGO)
 .then(()=>{
@@ -14,6 +14,7 @@ mongoose.connect(process.env.MONGO)
 })
 const app=express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.listen(3000,()=>{
     console.log('Server is Running on 3000')

@@ -33,7 +33,7 @@ function Profile() {
             const response = JSON.parse(xhr.responseText);
             setImageUrl(response.secure_url);
             setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000); // Hide success after 3s
+            setTimeout(() => setSuccess(false), 3000);
           } else {
             console.error('Upload failed', xhr.responseText);
           }
@@ -55,9 +55,9 @@ function Profile() {
   }, [file]);
 
   return (
-    <div className='max-w-lg mx-auto p-3'>
+    <div className='max-w-lg mx-auto p-3 w-full'>
       <h1 className='text-3xl font-bold text-center my-7'>Profile</h1>
-      <form className='flex flex-col items-center gap-4'>
+      <form className='flex flex-col gap-4 w-full'>
         <input
           onChange={(e) => setFile(e.target.files[0])}
           type='file'
@@ -66,17 +66,17 @@ function Profile() {
           hidden
         />
 
-        <div className='relative'>
+        <div className='flex justify-center'>
           <img
             src={imageUrl}
             onClick={() => fileRef.current.click()}
             alt='profile'
-            className='rounded-full h-24 w-24 object-cover cursor-pointer self-center mt-2'
+            className='rounded-full h-24 w-24 object-cover cursor-pointer mt-2'
           />
         </div>
 
         {uploading && (
-          <div className='w-64'>
+          <div className='w-full'>
             <div className='text-sm mb-1 text-gray-700'>Uploading: {progress}%</div>
             <div className='w-full bg-gray-300 rounded-full h-2.5 mb-2'>
               <div
@@ -88,31 +88,31 @@ function Profile() {
         )}
 
         {success && (
-          <div className='w-64 text-green-600 text-sm text-center border border-green-500 rounded p-2'>
+          <div className='w-full text-green-600 text-sm text-center border border-green-500 rounded p-2'>
             ✅ Uploaded successfully!
           </div>
         )}
 
         <input
           type='text'
-          placeholder='username'
+          placeholder='Username'
           id='username'
-          className='border border-gray-300 rounded-lg p-3 w-64'
+          className='border border-gray-300 rounded-lg p-3 w-full'
         />
         <input
           type='email'
-          placeholder='email'
+          placeholder='Email'
           id='email'
-          className='border border-gray-300 rounded-lg p-3 w-64'
+          className='border border-gray-300 rounded-lg p-3 w-full'
         />
         <input
           type='password'
-          placeholder='password'
+          placeholder='Password'
           id='password'
-          className='border border-gray-300 rounded-lg p-3 w-64'
+          className='border border-gray-300 rounded-lg p-3 w-full'
         />
 
-        <button className='bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'>
+        <button className='w-full bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'>
           Update
         </button>
       </form>
