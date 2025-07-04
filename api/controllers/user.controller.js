@@ -38,3 +38,20 @@ export const updateUser = async (req, res, next) => {
     next(err); // ✅ properly defined and passed now
   }
 };
+export const deleteUser = async (req, res, next) => {
+  if (req.user._id !== req.params._id) {
+    return next(errorHandler(401, 'You can only delete your own account'));
+  }
+
+  try {
+    await User.findByIdAndDelete(req.params.id);
+
+    // Optionally, you can also delete the user's posts or other related data here
+    // await Post.deleteMany({ userId: req.params.id });  
+    // If you have a Post model and want to delete posts by this user, uncomment the above line 
+    res.clearCookie('access_token');
+    res.status(200).json('User has been deleted');
+  } catch (err) {
+    next(err); // ✅ properly defined and passed now
+  }
+};

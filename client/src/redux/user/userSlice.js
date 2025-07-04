@@ -37,11 +37,21 @@ const userSlice = createSlice({
       state.error = action.payload;
       state.loading = false;
     },
-    // Optional: Logout action
-    signOut: (state) => {
-      state.currentUser = null;
-      localStorage.removeItem('user');
-    }
+   deleteUserSuccess: (state) => {
+      state.currentUser = null; // Clear user on delete
+      localStorage.removeItem('user'); // Remove from localStorage  
+      state.loading = false;
+      state.error = null;  
+    },
+   deleteUserFailure: (state,action) => {
+      state.error = action.payload;
+      state.loading = false;
+    },
+  deleteUserStart: (state) => {
+      state.loading = true;
+    },  
+
+ 
   },
 });
 
@@ -52,7 +62,9 @@ export const {
   updateUserFailure,
   updateUserStart,
   updateUserSuccess,
-  signOut
+  deleteUserSuccess,
+  deleteUserFailure,
+  deleteUserStart,
 } = userSlice.actions;
 
 export default userSlice.reducer;
