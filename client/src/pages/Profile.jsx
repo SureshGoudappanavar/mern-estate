@@ -1,22 +1,32 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateUserFailure, updateUserStart, updateUserSuccess } from '../redux/user/userSlice';
 
 function Profile() {
   const fileRef = useRef(null);
-  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const { currentUser,loading,error } = useSelector((state) => state.user);
+
   const [file, setFile] = useState(undefined);
   const [imageUrl, setImageUrl] = useState(currentUser.avatar);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false); 
+  const [formData, setFormData] = useState({
+    username: currentUser.username,
+    email: currentUser.email,
+    password: '',
+    avatar: currentUser.avatar,
+  });
 
   useEffect(() => {
     if (file) {
       const uploadImage = () => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'mern-estate');
-        formData.append('cloud_name', 'mern-estate');
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('upload_preset', 'mern-estate');
+        uploadData.append('cloud_name', 'mern-estate');
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', 'https://api.cloudinary.com/v1_1/mern-estate/image/upload');
@@ -32,6 +42,7 @@ function Profile() {
           if (xhr.status === 200) {
             const response = JSON.parse(xhr.responseText);
             setImageUrl(response.secure_url);
+            setFormData((prev) => ({ ...prev, avatar: response.secure_url }));
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
           } else {
@@ -47,17 +58,51 @@ function Profile() {
 
         setUploading(true);
         setSuccess(false);
-        xhr.send(formData);
+        xhr.send(uploadData);
       };
 
       uploadImage();
     }
   }, [file]);
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      dispatch(updateUserStart());
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(updateUserFailure(data.message));
+        return;
+      }
+
+      dispatch(updateUserSuccess(data)); // this will update Redux state
+      setSuccess(true);
+      setUpdateSuccess(true);
+      setTimeout(() => setUpdateSuccess(false), 3000); 
+    } catch (error) {
+      dispatch(updateUserFailure(error.message));
+    }
+  };
+
   return (
     <div className='max-w-lg mx-auto p-3 w-full'>
       <h1 className='text-3xl font-bold text-center my-7'>Profile</h1>
-      <form className='flex flex-col gap-4 w-full'>
+      <form onSubmit={handleSubmit} className='flex flex-col gap-4 w-full'>
         <input
           onChange={(e) => setFile(e.target.files[0])}
           type='file'
@@ -86,34 +131,40 @@ function Profile() {
             </div>
           </div>
         )}
+        {updateSuccess && (
+  <div className='text-green-600 text-sm text-center mt-4'>
+    Profile updated successfully
+  </div>
+)}
 
-        {success && (
-          <div className='w-full text-green-600 text-sm text-center border border-green-500 rounded p-2'>
-            ✅ Uploaded successfully!
-          </div>
-        )}
 
         <input
           type='text'
           placeholder='Username'
           id='username'
+          value={formData.username}
+          onChange={handleChange}
           className='border border-gray-300 rounded-lg p-3 w-full'
         />
         <input
           type='email'
           placeholder='Email'
           id='email'
+          value={formData.email}
+          onChange={handleChange}
           className='border border-gray-300 rounded-lg p-3 w-full'
         />
         <input
           type='password'
           placeholder='Password'
           id='password'
+          value={formData.password}
+          onChange={handleChange}
           className='border border-gray-300 rounded-lg p-3 w-full'
         />
 
-        <button className='w-full bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'>
-          Update
+        <button disabled={loading} className='w-full bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'>
+        {loading ? 'Updating...' : 'Update'}
         </button>
       </form>
 
@@ -121,6 +172,11 @@ function Profile() {
         <span className='text-red-700 cursor-pointer'>Delete Account</span>
         <span className='text-red-700 cursor-pointer'>Sign Out</span>
       </div>
+      {error && (
+        <div className='mt-3 text-red-600 text-sm'>
+          {error}
+        </div>
+      )}
     </div>
   );
 }
