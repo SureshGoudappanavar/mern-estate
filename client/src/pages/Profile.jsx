@@ -1,20 +1,31 @@
+// src/pages/Profile.js
+
 import React, { useRef, useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteUserFailure, deleteUserStart, 
-  updateUserFailure, updateUserStart,
-   updateUserSuccess ,deleteUserSuccess} from '../redux/user/userSlice';
+import {
+  deleteUserFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+  updateUserFailure,
+  updateUserStart,
+  updateUserSuccess,
+  signOutUserStart,
+  signOutUserSuccess,
+  signOutUserFailure,
+} from '../redux/user/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 function Profile() {
   const fileRef = useRef(null);
   const dispatch = useDispatch();
-  const { currentUser,loading,error } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const { currentUser, loading, error } = useSelector((state) => state.user);
 
   const [file, setFile] = useState(undefined);
   const [imageUrl, setImageUrl] = useState(currentUser.avatar);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [success, setSuccess] = useState(false);
-  const [updateSuccess, setUpdateSuccess] = useState(false); 
+  const [updateSuccess, setUpdateSuccess] = useState(false);
   const [formData, setFormData] = useState({
     username: currentUser.username,
     email: currentUser.email,
@@ -22,6 +33,14 @@ function Profile() {
     avatar: currentUser.avatar,
   });
 
+  // 🔁 Redirect to sign-in page if user logs out
+  useEffect(() => {
+    if (!currentUser) {
+      navigate('/sign-in');
+    }
+  }, [currentUser, navigate]);
+
+  // ⬆️ Upload image to Cloudinary when file is selected
   useEffect(() => {
     if (file) {
       const uploadImage = () => {
@@ -45,8 +64,6 @@ function Profile() {
             const response = JSON.parse(xhr.responseText);
             setImageUrl(response.secure_url);
             setFormData((prev) => ({ ...prev, avatar: response.secure_url }));
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
           } else {
             console.error('Upload failed', xhr.responseText);
           }
@@ -59,7 +76,6 @@ function Profile() {
         };
 
         setUploading(true);
-        setSuccess(false);
         xhr.send(uploadData);
       };
 
@@ -92,10 +108,9 @@ function Profile() {
         return;
       }
 
-      dispatch(updateUserSuccess(data)); // this will update Redux state
-      setSuccess(true);
+      dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 3000); 
+      setTimeout(() => setUpdateSuccess(false), 3000);
     } catch (error) {
       dispatch(updateUserFailure(error.message));
     }
@@ -104,23 +119,37 @@ function Profile() {
   const handleDeleteUser = async () => {
     if (window.confirm('Are you sure you want to delete your account?')) {
       try {
-       dispatch(deleteUserStart());
-        const res = await fetch(`/api/user/delete/${currentUser._id}`, {  
+        dispatch(deleteUserStart());
+        const res = await fetch(`/api/user/delete/${currentUser._id}`, {
           method: 'DELETE',
-       
         });
         const data = await res.json();
         if (data.success === false) {
           dispatch(deleteUserFailure(data.message));
           return;
         }
-        dispatch(deleteUserSuccess(data)); // Clear user from Redux state
-        localStorage.removeItem('user'); // Clear user from localStorage
-
+        dispatch(deleteUserSuccess());
       } catch (error) {
-       dispatch(deleteUserFailure(error.message));
-        setError(error.message);
+        dispatch(deleteUserFailure(error.message));
       }
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      dispatch(signOutUserStart());
+      const res = await fetch('/api/auth/signout', {
+        method: 'POST',
+        credentials: 'include', // 🧠 Important if using cookies
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(signOutUserFailure(data.message));
+        return;
+      }
+      dispatch(signOutUserSuccess());
+    } catch (error) {
+      dispatch(signOutUserFailure(error.message));
     }
   };
 
@@ -157,11 +186,10 @@ function Profile() {
           </div>
         )}
         {updateSuccess && (
-  <div className='text-green-600 text-sm text-center mt-4'>
-    Profile updated successfully
-  </div>
-)}
-
+          <div className='text-green-600 text-sm text-center mt-4'>
+            Profile updated successfully
+          </div>
+        )}
 
         <input
           type='text'
@@ -188,15 +216,23 @@ function Profile() {
           className='border border-gray-300 rounded-lg p-3 w-full'
         />
 
-        <button disabled={loading} className='w-full bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'>
-        {loading ? 'Updating...' : 'Update'}
+        <button
+          disabled={loading}
+          className='w-full bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80'
+        >
+          {loading ? 'Updating...' : 'Update'}
         </button>
       </form>
 
       <div className='flex justify-between mt-5'>
-        <span onClick={handleDeleteUser} className='text-red-700 cursor-pointer'>Delete Account</span>
-        <span className='text-red-700 cursor-pointer'>Sign Out</span>
+        <span onClick={handleDeleteUser} className='text-red-700 cursor-pointer'>
+          Delete Account
+        </span>
+        <span onClick={handleSignOut} className='text-red-700 cursor-pointer'>
+          Sign Out
+        </span>
       </div>
+
       {error && (
         <div className='mt-3 text-red-600 text-sm'>
           {error}
