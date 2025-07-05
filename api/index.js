@@ -6,6 +6,7 @@ import userAuth from './routes/auth.router.js';
 import uploadRoutes from './routes/upload.js';
 import listingRouter from './routes/listing.route.js';
 import cookieParser from 'cookie-parser';
+import userRoute from './routes/user.route.js';
 dotenv.config();
 mongoose.connect(process.env.MONGO)
 .then(()=>{
@@ -27,6 +28,9 @@ app.use('/api/user',userRouter);
 app.use('/api/auth',userAuth);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/listing', listingRouter );
+
+app.use('/api/user', userRoute); // 👈 mounts /api/user/:id
+
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
     const message=err.message||"Internal Server Error";

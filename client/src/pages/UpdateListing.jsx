@@ -1,32 +1,27 @@
-import { use } from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate,useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-export default function CreateListing() {
+export default function UpdateListing() {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
-    const params = useParams(); // Get listingId from URL params
+  const params = useParams();
   const fileInputRef = useRef(null);
 
   const [files, setFiles] = useState([]);
-  const [formData, setFormData] = useState(() => {
-    // Restore from localStorage on reload
-    const saved = localStorage.getItem('listingData');
-    return saved ? JSON.parse(saved) : {
-      imageUrls: [],
-      name: '',
-      description: '',
-      address: '',
-      type: 'rent',
-      bedrooms: 1,
-      bathrooms: 1,
-      regularPrice: 50,
-      discountPrice: 0,
-      offer: false,
-      parking: false,
-      furnished: false,
-    };
+  const [formData, setFormData] = useState({
+    imageUrls: [],
+    name: '',
+    description: '',
+    address: '',
+    type: 'rent',
+    bedrooms: 1,
+    bathrooms: 1,
+    regularPrice: 50,
+    discountPrice: 0,
+    offer: false,
+    parking: false,
+    furnished: false,
   });
 
   const [imageUploadError, setImageUploadError] = useState(false);
@@ -34,39 +29,34 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Sync to localStorage for persistence on refresh
+  // ✅ Fetch listing data
   useEffect(() => {
-    localStorage.setItem('listingData', JSON.stringify(formData));
-  }, [formData]);
-
-useEffect(() => {
-    const fetchListing=async() => {
-        const listingId = params.listingId;
-       const res = await fetch(`/api/listing/get/${listingId}`);
+    const fetchListing = async () => {
+      try {
+        const res = await fetch(`/api/listing/get/${params.listingId}`);
         const data = await res.json();
-        if(data.success ==false) {
-            return navigate('/'); // Redirect if listing not found
-      console.log(data.message);  
-      return;  
+        if (data.success === false || !data.listing) {
+          navigate('/');
+          return;
         }
-         setFormData(data.listing);
-    }
-
+        setFormData((prev) => ({
+          ...prev,
+          ...data.listing,
+        }));
+      } catch (err) {
+        setError('Failed to load listing.');
+      }
+    };
     fetchListing();
-}, []);
+  }, [params.listingId, navigate]);
 
-
-
-
+  // ✅ Upload images to Cloudinary
   const handleImageSubmit = () => {
     if (files.length > 0 && files.length + formData.imageUrls.length <= 6) {
       setUploading(true);
       setImageUploadError(false);
-      const promises = [];
 
-      for (let i = 0; i < files.length; i++) {
-        promises.push(storeImage(files[i]));
-      }
+      const promises = Array.from(files).map((file) => storeImage(file));
 
       Promise.all(promises)
         .then((urls) => {
@@ -74,17 +64,13 @@ useEffect(() => {
             ...prev,
             imageUrls: prev.imageUrls.concat(urls),
           }));
-          setUploading(false);
-          setFiles([]); // Clear state
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''; // Clear file input visually
-          }
+          setFiles([]);
+          fileInputRef.current.value = '';
         })
-        .catch((err) => {
-          console.error('Upload error:', err);
+        .catch(() => {
           setImageUploadError('Image upload failed (2 MB max per image)');
-          setUploading(false);
-        });
+        })
+        .finally(() => setUploading(false));
     } else {
       setImageUploadError('You can only upload up to 6 images per listing');
     }
@@ -101,10 +87,7 @@ useEffect(() => {
         body: data,
       })
         .then((res) => res.json())
-        .then((data) => {
-          if (data.secure_url) resolve(data.secure_url);
-          else reject('No secure_url returned');
-        })
+        .then((data) => (data.secure_url ? resolve(data.secure_url) : reject()))
         .catch((err) => reject(err));
     });
   };
@@ -122,21 +105,19 @@ useEffect(() => {
       setFormData((prev) => ({ ...prev, type: id }));
     } else if (['parking', 'furnished', 'offer'].includes(id)) {
       setFormData((prev) => ({ ...prev, [id]: checked }));
-    } else if (['number', 'text', 'textarea'].includes(type)) {
+    } else {
       setFormData((prev) => ({ ...prev, [id]: value }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.imageUrls.length < 1)
-      return setError('Please upload at least one image');
+    if (formData.imageUrls.length < 1) return setError('Upload at least one image');
     if (formData.offer && +formData.discountPrice >= +formData.regularPrice)
-      return setError('Discount price must be lower than regular price');
+      return setError('Discount price must be less than regular price');
 
     try {
       setLoading(true);
-      setError(false);
       const res = await fetch(`/api/listing/update/${params.listingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,51 +125,79 @@ useEffect(() => {
       });
 
       const data = await res.json();
-      setLoading(false);
+      if (!res.ok) throw new Error(data.message || 'Update failed');
 
-      if (!res.ok) throw new Error(data.message || 'Listing creation failed');
-      localStorage.removeItem('listingData'); // Clear cache on success
+      localStorage.removeItem('listingData');
       navigate(`/listing/${data._id}`);
     } catch (err) {
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <main className='p-3 max-w-4xl mx-auto'>
-      <h1 className='text-3xl font-semibold text-center my-7'>
-        Update Listing 
-      </h1>
+      <h1 className='text-3xl font-semibold text-center my-7'>Update Listing</h1>
       <form onSubmit={handleSubmit} className='flex flex-col sm:flex-row gap-4'>
         <div className='flex flex-col gap-4 flex-1'>
-          {/* Text Inputs */}
-          <input type='text' id='name' placeholder='Name' className='border p-3 rounded-lg'
-            maxLength='62' minLength='10' required onChange={handleChange} value={formData.name} />
-          <textarea id='description' placeholder='Description' className='border p-3 rounded-lg'
-            required onChange={handleChange} value={formData.description} />
-          <input type='text' id='address' placeholder='Address' className='border p-3 rounded-lg'
-            required onChange={handleChange} value={formData.address} />
+          <input
+            type='text'
+            id='name'
+            placeholder='Name'
+            className='border p-3 rounded-lg'
+            maxLength='62'
+            minLength='10'
+            required
+            onChange={handleChange}
+            value={formData.name ?? ''}
+          />
+          <textarea
+            id='description'
+            placeholder='Description'
+            className='border p-3 rounded-lg'
+            required
+            onChange={handleChange}
+            value={formData.description ?? ''}
+          />
+          <input
+            type='text'
+            id='address'
+            placeholder='Address'
+            className='border p-3 rounded-lg'
+            required
+            onChange={handleChange}
+            value={formData.address ?? ''}
+          />
 
           {/* Options */}
           <div className='flex flex-wrap gap-4'>
             {['sale', 'rent'].map((type) => (
               <label key={type} className='flex items-center gap-2'>
-                <input type='checkbox' id={type} checked={formData.type === type}
-                  onChange={handleChange} className='w-5 h-5' />
+                <input
+                  type='checkbox'
+                  id={type}
+                  checked={formData.type === type}
+                  onChange={handleChange}
+                  className='w-5 h-5'
+                />
                 <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
               </label>
             ))}
             {['parking', 'furnished', 'offer'].map((option) => (
               <label key={option} className='flex items-center gap-2'>
-                <input type='checkbox' id={option} checked={formData[option]}
-                  onChange={handleChange} className='w-5 h-5' />
+                <input
+                  type='checkbox'
+                  id={option}
+                  checked={formData[option] || false}
+                  onChange={handleChange}
+                  className='w-5 h-5'
+                />
                 <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
               </label>
             ))}
           </div>
 
-          {/* Numeric Inputs */}
           <div className='flex flex-wrap gap-4'>
             <Input label='Beds' id='bedrooms' value={formData.bedrooms} handleChange={handleChange} />
             <Input label='Baths' id='bathrooms' value={formData.bathrooms} handleChange={handleChange} />
@@ -199,10 +208,10 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Right - Image Upload & Preview */}
+        {/* Image Upload */}
         <div className='flex flex-col flex-1 gap-4'>
           <p className='font-semibold'>
-            Images: <span className='text-gray-600 text-sm'>(You can only Upload 6 Images)</span>
+            Images: <span className='text-gray-600 text-sm'>(Max 6 images)</span>
           </p>
           <div className='flex gap-2'>
             <input
@@ -213,18 +222,26 @@ useEffect(() => {
               multiple
               accept='image/*'
             />
-            <button type='button' disabled={uploading} onClick={handleImageSubmit}
-              className='p-3 text-green-700 border border-green-700 rounded hover:shadow-lg uppercase'>
+            <button
+              type='button'
+              disabled={uploading}
+              onClick={handleImageSubmit}
+              className='p-3 text-green-700 border border-green-700 rounded hover:shadow-lg uppercase'
+            >
               {uploading ? 'Uploading...' : 'Upload'}
             </button>
           </div>
           {imageUploadError && <p className='text-red-700'>{imageUploadError}</p>}
-
           {formData.imageUrls.map((url, i) => (
             <div key={url} className='flex justify-between items-center p-2 border'>
               <img src={url} alt='upload' className='h-20 w-20 object-cover rounded' />
-              <button type='button' onClick={() => handleRemoveImage(i)}
-                className='text-red-600 hover:underline uppercase'>Delete</button>
+              <button
+                type='button'
+                onClick={() => handleRemoveImage(i)}
+                className='text-red-600 hover:underline uppercase'
+              >
+                Delete
+              </button>
             </div>
           ))}
 
@@ -248,7 +265,7 @@ function Input({ id, value, handleChange, label }) {
       <input
         type='number'
         id={id}
-        value={value}
+        value={value ?? ''}
         min='0'
         className='p-3 border rounded w-28'
         onChange={handleChange}
