@@ -21,10 +21,13 @@ const listingSchema = new mongoose.Schema({
     required: true,
   },
 
-  discountedPrice: {
-    type: Number,
-    required: true,
+discountedPrice: {
+  type: Number,
+  required: function () {
+    return this.offer === true;
   },
+},
+
 
   bathrooms: {
     type: Number,
