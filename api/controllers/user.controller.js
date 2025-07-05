@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js';
-
+import { Listing } from '../models/listing.model.js';
 export const test = (req, res) => {
   res.json({
     message: 'Hello World!',
@@ -55,3 +55,22 @@ export const deleteUser = async (req, res, next) => {
     next(err); // ✅ properly defined and passed now
   }
 };
+
+export const getUserListing = async (req, res, next) => {
+ if(req.id !== req.params.id) {
+     try {
+      const listings = await Listing.find({ userRef: req.params.id });
+     res.status(200).json({
+        success: true,  
+        message: 'User listings fetched successfully',
+        listings,
+      });
+     } catch (error) {
+      next(errorHandler(500, 'Internal Server Error'));
+     }
+  } 
+ else{
+     return next(errorHandler(401, 'You can only access your own listings'));
+  }
+ };
+
