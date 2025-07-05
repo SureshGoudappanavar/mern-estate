@@ -1,5 +1,3 @@
-// src/pages/Profile.js
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -13,8 +11,8 @@ import {
   signOutUserSuccess,
   signOutUserFailure,
 } from '../redux/user/userSlice';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+
 function Profile() {
   const fileRef = useRef(null);
   const dispatch = useDispatch();
@@ -35,14 +33,10 @@ function Profile() {
     avatar: currentUser.avatar,
   });
 
-  // 🔁 Redirect to sign-in page if user logs out
   useEffect(() => {
-    if (!currentUser) {
-      navigate('/sign-in');
-    }
+    if (!currentUser) navigate('/sign-in');
   }, [currentUser, navigate]);
 
-  // ⬆️ Upload image to Cloudinary when file is selected
   useEffect(() => {
     if (file) {
       const uploadImage = () => {
@@ -56,8 +50,7 @@ function Profile() {
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            setProgress(percentComplete);
+            setProgress(Math.round((event.loaded / event.total) * 100));
           }
         };
 
@@ -86,10 +79,7 @@ function Profile() {
   }, [file]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -98,9 +88,7 @@ function Profile() {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
@@ -119,21 +107,23 @@ function Profile() {
   };
 
   const handleDeleteUser = async () => {
-    if (window.confirm('Are you sure you want to delete your account?')) {
-      try {
-        dispatch(deleteUserStart());
-        const res = await fetch(`/api/user/delete/${currentUser._id}`, {
-          method: 'DELETE',
-        });
-        const data = await res.json();
-        if (data.success === false) {
-          dispatch(deleteUserFailure(data.message));
-          return;
-        }
-        dispatch(deleteUserSuccess());
-      } catch (error) {
-        dispatch(deleteUserFailure(error.message));
+    if (!window.confirm('Are you sure you want to delete your account?')) return;
+
+    try {
+      dispatch(deleteUserStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (data.success === false) {
+        dispatch(deleteUserFailure(data.message));
+        return;
       }
+
+      dispatch(deleteUserSuccess());
+    } catch (error) {
+      dispatch(deleteUserFailure(error.message));
     }
   };
 
@@ -142,39 +132,59 @@ function Profile() {
       dispatch(signOutUserStart());
       const res = await fetch('/api/auth/signout', {
         method: 'POST',
-        credentials: 'include', // 🧠 Important if using cookies
+        credentials: 'include',
       });
+
       const data = await res.json();
       if (data.success === false) {
         dispatch(signOutUserFailure(data.message));
         return;
       }
+
       dispatch(signOutUserSuccess());
     } catch (error) {
       dispatch(signOutUserFailure(error.message));
     }
   };
 
-const handleShowListing = async () => {
-  try {
-    setShowListingError(false);
-    const res = await fetch(`/api/user/listing/${currentUser._id}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    const data = await res.json();
-    if (data.success === false) {
+  const handleShowListing = async () => {
+    try {
+      setShowListingError(false);
+      const res = await fetch(`/api/user/listing/${currentUser._id}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        setShowListingError(true);
+        return;
+      }
+      setUserListings(data.listings);
+    } catch (error) {
       setShowListingError(true);
-      return;
     }
+  };
 
-    // You can navigate or show the listings here
-    console.log(data.listing); // Or use navigate to pass to a new page
-    setUserListings(data.listings);
-  } catch (error) {
-    setShowListingError(true);
-  }
-};
+  const handleListingDelete = async (listingId) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+
+    try {
+      const res = await fetch(`/api/listing/delete/${listingId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+      if (data.success === false) {
+        alert(data.message);
+        return;
+      }
+
+      setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
+    } catch (error) {
+      alert('Error deleting listing');
+    }
+  };
 
   return (
     <div className='max-w-lg mx-auto p-3 w-full'>
@@ -187,7 +197,6 @@ const handleShowListing = async () => {
           accept='image/*'
           hidden
         />
-
         <div className='flex justify-center'>
           <img
             src={imageUrl}
@@ -208,6 +217,7 @@ const handleShowListing = async () => {
             </div>
           </div>
         )}
+
         {updateSuccess && (
           <div className='text-green-600 text-sm text-center mt-4'>
             Profile updated successfully
@@ -245,8 +255,12 @@ const handleShowListing = async () => {
         >
           {loading ? 'Updating...' : 'Update'}
         </button>
-        <Link to="/create-listing" className='bg-green-700 text-white rounded-lg p-3 text-center uppercase hover:opacity-95'>
-  create listing
+
+        <Link
+          to='/create-listing'
+          className='bg-green-700 text-white rounded-lg p-3 text-center uppercase hover:opacity-95'
+        >
+          Create Listing
         </Link>
       </form>
 
@@ -259,24 +273,19 @@ const handleShowListing = async () => {
         </span>
       </div>
 
-      {error && (
-        <div className='mt-3 text-red-600 text-sm'>
-          {error}
-        </div>
+      {error && <div className='mt-3 text-red-600 text-sm'>{error}</div>}
+
+      <button onClick={handleShowListing} className='text-green-700 w-full mt-5'>
+        Show Listings
+      </button>
+
+      {showListingError && (
+        <div className='mt-3 text-red-600 text-sm'>Error showing listing</div>
       )}
 
-      <button onClick={handleShowListing} className='text-green-700 w-full'>Show Listing</button>
-      {showListingError && (
-        <div className='mt-3 text-red-600 text-sm'>
-          Error showing listing
-        </div>
-      )}
- 
-  {userListings && userListings.length > 0 && (
+      {userListings.length > 0 && (
         <div className='flex flex-col gap-4'>
-          <h1 className='text-center mt-7 text-2xl font-semibold'>
-            Your Listings
-          </h1>
+          <h1 className='text-center mt-7 text-2xl font-semibold'>Your Listings</h1>
           {userListings.map((listing) => (
             <div
               key={listing._id}
@@ -290,13 +299,13 @@ const handleShowListing = async () => {
                 />
               </Link>
               <Link
-                className='text-slate-700 font-semibold  hover:underline truncate flex-1'
+                className='text-slate-700 font-semibold hover:underline truncate flex-1'
                 to={`/listing/${listing._id}`}
               >
                 <p>{listing.name}</p>
               </Link>
 
-              <div className='flex flex-col item-center'>
+              <div className='flex flex-col items-center'>
                 <button
                   onClick={() => handleListingDelete(listing._id)}
                   className='text-red-700 uppercase'
