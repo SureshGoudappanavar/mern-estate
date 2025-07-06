@@ -4,13 +4,14 @@ import Home from './pages/Home'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import Profile from './pages/Profile'
-import About from './pages/About.jsx'
+
 import Header from './componenets/Header'
 import PrivateRoute from './componenets/PrivateRoute'
 import CreateListing from './pages/CreateListing'
 import UpdateListing from './pages/updateListing'
 import Listing from './pages/Listing'
 import Search from './pages/Search.jsx'
+import About from './pages/about.jsx'
 function App() {
   return (
 <BrowserRouter>  
