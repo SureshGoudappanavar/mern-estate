@@ -1,6 +1,6 @@
 import React from 'react';
 
- function About() {
+ function about() {
   return (
     <div className="py-20 px-6 max-w-5xl mx-auto animate-fadeIn">
       {/* Header Section */}
@@ -30,4 +30,4 @@ import React from 'react';
     </div>
   );
 }
-export default About;
+export default about;
