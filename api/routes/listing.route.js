@@ -9,6 +9,4 @@ router.delete('/delete/:id', verifyToken,deleteListing);
 router.post('/update/:id', verifyToken,updateListing);
 router.get('/get/:id',getListing);
 router.get('/get', getListings); // Assuming you want to fetch all listings
-router.get('/:id', getUser); // Assuming you want to fetch all listings
-
 export default router;
