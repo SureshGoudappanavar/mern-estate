@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Routes
 import userRouter from './routes/user.route.js';
@@ -12,30 +13,33 @@ import listingRouter from './routes/listing.route.js';
 
 dotenv.config();
 
-// Connect to MongoDB
+// MongoDB Connection
 mongoose.connect(process.env.MONGO)
   .then(() => console.log('Connected to DB'))
   .catch((err) => console.error('DB Connection Error:', err));
 
-// Create app
-const __dirname = path.resolve();
-const app = express();
+// Set __dirname (needed in ES Module)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// Express App
+const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
+// API Routes
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/listing', listingRouter);
 
-// Serve frontend (client build)
-// app.use(express.static(path.join(__dirname, '/client/dist')));
+// Optional: Serve frontend in production
+// const clientPath = path.join(__dirname, '../client/dist');
+// app.use(express.static(clientPath));
 // app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+//   res.sendFile(path.join(clientPath, 'index.html'));
 // });
 
 // Global error handler
@@ -49,7 +53,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
+// Use dynamic PORT (for Render or Railway)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
