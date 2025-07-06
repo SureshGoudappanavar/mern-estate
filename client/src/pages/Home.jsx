@@ -168,7 +168,6 @@ export default function Home() {
         console.log(error);
       }
     };
-
     const fetchSaleListings = async () => {
       try {
         const res = await fetch('/api/listing/get?type=sale&limit=4');
@@ -186,7 +185,11 @@ export default function Home() {
       {/* Hero Section */}
       <div className='flex flex-col items-center justify-center gap-6 py-24 px-3 max-w-7xl mx-auto text-center bg-gradient-to-r from-slate-100 via-white to-slate-100'>
         <h1 className='text-slate-800 font-extrabold text-4xl sm:text-5xl md:text-6xl leading-tight'>
-          Find your next <span className='text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600'>perfect place</span><br />
+          Find your next{' '}
+          <span className='text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600'>
+            perfect place
+          </span>
+          <br />
           with ease
         </h1>
         <p className='text-gray-500 text-sm sm:text-base max-w-2xl'>
@@ -202,12 +205,11 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* Swiper Section (Clean & Sharp) */}
+      {/* Swiper Section */}
       <div className='relative'>
-        <Swiper navigation loop={true}>
-          {offerListings &&
-            offerListings.length > 0 &&
-            offerListings.map((listing) => (
+        {offerListings.length > 1 ? (
+          <Swiper navigation loop={true}>
+            {offerListings.map((listing) => (
               <SwiperSlide key={listing._id}>
                 <div className='relative h-[500px] w-full'>
                   <img
@@ -229,7 +231,29 @@ export default function Home() {
                 </div>
               </SwiperSlide>
             ))}
-        </Swiper>
+          </Swiper>
+        ) : offerListings.length === 1 ? (
+          <div className='relative h-[500px] w-full'>
+            <img
+              src={
+                offerListings[0]?.imageUrls?.[0] ||
+                'https://via.placeholder.com/1200x500?text=No+Image'
+              }
+              alt='listing'
+              className='w-full h-full object-cover'
+              loading='lazy'
+            />
+            <div className='absolute inset-0 bg-black/30'></div>
+            <div className='absolute bottom-10 left-10 text-white z-10'>
+              <h2 className='text-2xl font-bold drop-shadow'>
+                {offerListings[0]?.name}
+              </h2>
+              <p className='text-sm max-w-xl line-clamp-2 drop-shadow-sm'>
+                {offerListings[0]?.description}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Listings Section */}
@@ -288,5 +312,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
