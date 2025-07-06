@@ -35,12 +35,18 @@ app.use('/api/auth', authRouter);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/listing', listingRouter);
 
-// Optional: Serve frontend in production
-// const clientPath = path.join(__dirname, '../client/dist');
-// app.use(express.static(clientPath));
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(clientPath, 'index.html'));
-// });
+import fs from 'fs';
+
+// Serve frontend in production only if build exists
+const clientPath = path.join(__dirname, '../client/dist');
+
+if (fs.existsSync(clientPath)) {
+  app.use(express.static(clientPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientPath, 'index.html'));
+  });
+}
+
 
 // Global error handler
 app.use((err, req, res, next) => {
