@@ -55,6 +55,11 @@ import { Link } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 
 export default function ListingItem({ listing }) {
+  const discountAmount =
+    listing.offer && listing.regularPrice && listing.discountPrice
+      ? listing.regularPrice - listing.discountPrice
+      : 0;
+
   return (
     <div className='bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[290px]'>
       <Link to={`/listing/${listing._id}`}>
@@ -79,23 +84,40 @@ export default function ListingItem({ listing }) {
           <p className='text-sm text-gray-600 line-clamp-2'>
             {listing.description}
           </p>
-          <p className='text-slate-500 mt-2 font-semibold '>
-            $
-            {listing.offer
-              ? listing.discountPrice.toLocaleString('en-US')
-              : listing.regularPrice.toLocaleString('en-US')}
-            {listing.type === 'rent' && ' / month'}
-          </p>
+
+          {/* Pricing display */}
+          <div className='mt-2'>
+            {listing.offer ? (
+              <>
+                <p className='text-sm text-red-600 font-semibold'>
+                  ${discountAmount.toLocaleString('en-US')} OFF
+                </p>
+                <p className='text-sm line-through text-gray-400'>
+                  ${listing.regularPrice.toLocaleString('en-US')}
+                </p>
+                <p className='text-slate-700 font-semibold'>
+                  ${listing.discountPrice.toLocaleString('en-US')}
+                  {listing.type === 'rent' && ' / month'}
+                </p>
+              </>
+            ) : (
+              <p className='text-slate-700 font-semibold'>
+                ${listing.regularPrice.toLocaleString('en-US')}
+                {listing.type === 'rent' && ' / month'}
+              </p>
+            )}
+          </div>
+
           <div className='text-slate-700 flex gap-4'>
             <div className='font-bold text-xs'>
               {listing.bedrooms > 1
-                ? `${listing.bedrooms} beds `
-                : `${listing.bedrooms} bed `}
+                ? `${listing.bedrooms} beds`
+                : `${listing.bedrooms} bed`}
             </div>
             <div className='font-bold text-xs'>
               {listing.bathrooms > 1
-                ? `${listing.bathrooms} baths `
-                : `${listing.bathrooms} bath `}
+                ? `${listing.bathrooms} baths`
+                : `${listing.bathrooms} bath`}
             </div>
           </div>
         </div>
@@ -103,3 +125,4 @@ export default function ListingItem({ listing }) {
     </div>
   );
 }
+
