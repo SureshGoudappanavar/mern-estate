@@ -55,10 +55,10 @@ import { Link } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 
 export default function ListingItem({ listing }) {
-  const discountAmount =
-    listing.offer && listing.regularPrice && listing.discountPrice
-      ? listing.regularPrice - listing.discountPrice
-      : 0;
+  const hasOffer = listing.offer && listing.discountPrice < listing.regularPrice;
+  const discountAmount = hasOffer
+    ? listing.regularPrice - listing.discountPrice
+    : 0;
 
   return (
     <div className='bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[290px]'>
@@ -85,12 +85,12 @@ export default function ListingItem({ listing }) {
             {listing.description}
           </p>
 
-          {/* Pricing display */}
+          {/* Pricing logic */}
           <div className='mt-2'>
-            {listing.offer ? (
+            {hasOffer ? (
               <>
                 <p className='text-sm text-red-600 font-semibold'>
-                  ${discountAmount.toLocaleString('en-US')} OFF
+                  Save ${discountAmount.toLocaleString('en-US')}!
                 </p>
                 <p className='text-sm line-through text-gray-400'>
                   ${listing.regularPrice.toLocaleString('en-US')}

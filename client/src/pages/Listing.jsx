@@ -94,18 +94,19 @@ export default function Listing() {
           <div className='flex flex-col max-w-4xl mx-auto p-3 my-7 gap-4'>
             <p className='text-2xl font-semibold'>
               {listing.name} - $
-              <span className={listing.offer && listing.discountPrice < listing.regularPrice ? 'text-green-700' : ''}>
+              <span className='text-green-700'>
                 {(listing.offer && listing.discountPrice < listing.regularPrice
-                  ? listing.regularPrice - listing.discountPrice
+                  ? listing.discountPrice
                   : listing.regularPrice
                 ).toLocaleString('en-US')}
               </span>
+              {listing.type === 'rent' && ' / month'}
+
               {listing.offer && listing.discountPrice < listing.regularPrice && (
                 <span className='line-through text-gray-500 ml-2 text-lg'>
                   ${listing.regularPrice.toLocaleString('en-US')}
                 </span>
               )}
-              {listing.type === 'rent' && ' / month'}
             </p>
 
             <p className='flex items-center mt-6 gap-2 text-slate-600 text-sm'>
@@ -120,7 +121,11 @@ export default function Listing() {
               {listing.offer &&
                 listing.discountPrice < listing.regularPrice && (
                   <p className='bg-green-900 w-full max-w-[200px] text-white text-center p-1 rounded-md'>
-                    ${listing.discountPrice} OFF
+                    Save $
+                    {(listing.regularPrice - listing.discountPrice).toLocaleString(
+                      'en-US'
+                    )}
+                    !
                   </p>
                 )}
             </div>
