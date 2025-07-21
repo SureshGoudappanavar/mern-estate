@@ -89,7 +89,7 @@ export const getListings = async (req, res, next) => {
     parking = parking === 'true' ? true : { $in: [false, true] };
 
     let type = req.query.type;
-    type = type === 'sell' || type === 'rent' ? type : { $in: ['sell', 'rent'] };
+    type = type === 'sale' || type === 'rent' ? type : { $in: ['sale', 'rent'] };
 
     const searchTerm = typeof req.query.searchTerm === 'string' ? req.query.searchTerm : '';
 
