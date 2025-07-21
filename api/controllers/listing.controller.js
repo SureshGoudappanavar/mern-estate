@@ -8,7 +8,7 @@ export const createListing = async (req, res, next) => {
     return res.status(201).json({
       success: true,
       message: 'Listing created successfully',
-      _id: listing._id, // ✅ Add the _id at the top level for frontend to access easily
+      _id: listing._id, // ✅ Add this line to return the listing ID
       listing,
     });
   } catch (error) {
